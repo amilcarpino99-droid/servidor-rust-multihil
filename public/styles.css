@@ -1,0 +1,236 @@
+/* ─────────────────────────────────────────────
+   Servidor multihilo en Rust — estilos
+   Archivo: public/styles.css (servido en /styles.css)
+   ───────────────────────────────────────────── */
+
+/* Reset básico */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --fondo: #f4f6fb;
+  --texto: #1f2937;
+  --suave: #6b7280;
+  --acento: #2563eb;
+  --acento-oscuro: #1d4ed8;
+  --acento-suave: #dbeafe;
+  --borde: #e5e7eb;
+  --ok: #16a34a;
+  --error: #dc2626;
+  --radio: 12px;
+  --sombra: 0 4px 14px rgba(31, 41, 55, 0.08);
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  line-height: 1.55;
+}
+
+code {
+  background: var(--acento-suave);
+  color: #1e3a8a;
+  padding: 0.1em 0.4em;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+/* ── Hero: mensaje centrado en toda la pantalla ── */
+.hero {
+  min-height: 100vh;   /* respaldo para navegadores antiguos */
+  min-height: 100svh;  /* alto realmente visible en móvil */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+  background: linear-gradient(165deg, #eef2ff 0%, var(--fondo) 75%);
+}
+
+.indicador {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 6px rgba(22, 163, 74, 0.15);
+  animation: latido 1.8s ease-in-out infinite;
+}
+
+@keyframes latido {
+  50% {
+    box-shadow: 0 0 0 11px rgba(22, 163, 74, 0.06);
+  }
+}
+
+.hero h1 {
+  font-size: clamp(2.2rem, 7vw, 4rem);
+  letter-spacing: -0.02em;
+}
+
+.hero .detalle {
+  color: var(--suave);
+  font-size: clamp(1rem, 2.5vw, 1.15rem);
+}
+
+.salto {
+  margin-top: 2rem;
+  font-weight: 600;
+  color: var(--acento);
+  text-decoration: none;
+}
+
+.salto:hover {
+  text-decoration: underline;
+}
+
+/* ── Sección de demostración ── */
+.demo {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 4rem) 1.25rem 5rem;
+}
+
+.demo h2 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  margin-bottom: 0.75rem;
+}
+
+.explicacion {
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+}
+
+.controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.controles label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.controles select {
+  padding: 0.5rem 0.6rem;
+  font: inherit;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: #fff;
+  min-width: 6rem;
+}
+
+#btn-probar {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--acento);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+#btn-probar:hover:not(:disabled) {
+  background: var(--acento-oscuro);
+}
+
+#btn-probar:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+#btn-probar:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+/* ── Resultados ── */
+.resultados {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.resultados:empty {
+  display: none;
+}
+
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  padding: 0.8rem 1rem;
+  background: #fff;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+.chip {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--acento-suave);
+  color: #1e3a8a;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.estado {
+  min-width: 5.5rem;
+  font-size: 0.95rem;
+}
+
+.fila.en-curso .estado { color: #92400e; }
+.fila.lista { border-color: rgba(22, 163, 74, 0.35); }
+.fila.lista .estado { color: var(--ok); }
+.fila.fallida { border-color: rgba(220, 38, 38, 0.35); }
+.fila.fallida .estado { color: var(--error); }
+
+.hilo {
+  color: var(--suave);
+  font-size: 0.9rem;
+}
+
+.tiempos {
+  margin-left: auto;
+  color: var(--suave);
+  font-size: 0.9rem;
+}
+
+/* ── Resumen ── */
+.resumen {
+  padding: 1rem 1.25rem;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radio);
+  background: var(--acento-suave);
+  color: #1e3a8a;
+  font-size: 0.98rem;
+}
+
+.nota {
+  margin-top: 1.25rem;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+/* ── Móvil ── */
+@media (max-width: 520px) {
+  .tiempos {
+    margin-left: 0;
+    width: 100%;
+  }
+}

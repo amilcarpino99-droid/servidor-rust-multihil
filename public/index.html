@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Servidor multihilo en Rust</title>
+
+  <!-- Icono vacío: evita que el navegador pida /favicon.ico -->
+  <link rel="icon" href="data:," />
+
+  <!-- CSS en archivo separado (el servidor lo sirve en /styles.css) -->
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+  <!-- ── Pantalla de inicio: mensaje centrado en toda la pantalla ── -->
+  <section class="hero">
+    <span class="indicador" aria-hidden="true"></span>
+    <h1>Servidor encendido</h1>
+    <p class="detalle">
+      Rust · solo librería estándar · <code>TcpListener</code> + grupo de hilos
+    </p>
+    <a class="salto" href="#demo">↓ Probar la demostración del multihilo</a>
+  </section>
+
+  <!-- ── Sección interactiva: demo de peticiones en paralelo ── -->
+  <section class="demo" id="demo">
+    <h2>Demostración del servidor multihilo</h2>
+    <p class="explicacion">
+      Pulsa el botón y se lanzarán varias peticiones simultáneas contra
+      <code>/tarea?id=…&amp;delay=…</code>. El servidor atiende cada una en su
+      propio hilo y todas duermen a la vez, así que el tiempo total es el de la
+      tarea más lenta (no la suma de todas). Fíjate en el campo
+      <strong>hilo</strong>: cada petición la atiende un trabajador distinto.
+    </p>
+
+    <div class="controles">
+      <label>Peticiones
+        <select id="num-peticiones">
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+          <option value="6">6</option>
+          <option value="8">8</option>
+        </select>
+      </label>
+
+      <label>Retardo máx. (s)
+        <select id="retardo-max">
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="5">5</option>
+        </select>
+      </label>
+
+      <button id="btn-probar" type="button">Probar peticiones en paralelo</button>
+    </div>
+
+    <div id="resultados" class="resultados" aria-live="polite"></div>
+    <div id="resumen" class="resumen" hidden></div>
+
+    <p class="nota">
+      Nota: los navegadores limitan a ~6 las conexiones HTTP/1.1 simultáneas por
+      origen; con 8 peticiones, 2 esperan brevemente en la cola del navegador.
+    </p>
+  </section>
+
+  <script>
+    "use strict";
+
+    const btn = document.getElementById("btn-probar");
+    const selNum = document.getElementById("num-peticiones");
+    const selRetardo = document.getElementById("retardo-max");
+    const contResultados = document.getElementById("resultados");
+    const contResumen = document.getElementById("resumen");
+
+    btn.addEventListener("click", async () => {
+      const n = Number(selNum.value);
+      const retardoMax = Number(selRetardo.value);
+
+      btn.disabled = true;
+      contResultados.innerHTML = "";
+      contResumen.hidden = true;
+      contResumen.textContent = "";
+
+      const t0 = performance.now();
+      let sumaRetardos = 0; // trabajo simulado total, en segundos
+      const promesas = [];
+
+      for (let i = 1; i <= n; i++) {
+        const delay = 1 + Math.floor(Math.random() * retardoMax); // 1..retardoMax
+        sumaRetardos += delay;
+
+        const fila = crearFila(i, delay);
+        contResultados.appendChild(fila);
+
+        promesas.push(
+          fetch(`/tarea?id=${i}&delay=${delay}`)
+            .then((resp) => {
+              if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+              return resp.json();
+            })
+            .then((datos) => {
+              pintarExito(fila, datos, performance.now() - t0);
+              console.log(
+                `✔ /tarea?id=${datos.id} atendida por ${datos.hilo} ` +
+                `(servidor: ${datos.servidor_ms} ms)`
+              );
+            })
+            .catch((error) => {
+              pintarError(fila, error);
+              console.error(`✘ /tarea?id=${i} falló:`, error);
+            })
+        );
+      }
+
+      await Promise.all(promesas);
+      pintarResumen(n, sumaRetardos, performance.now() - t0);
+      btn.disabled = false;
+    });
+
+    function crearFila(id, delay) {
+      const fila = document.createElement("div");
+      fila.className = "fila en-curso";
+      fila.innerHTML = `
+        <span class="chip">#${id}</span>
+        <span class="estado">⏳ en curso…</span>
+        <span class="detalle">retardo pedido: ${delay} s</span>
+        <span class="hilo">hilo: —</span>
+        <span class="tiempos">—</span>
+      `;
+      return fila;
+    }
+
+    function pintarExito(fila, datos, msDesdeDisparo) {
+      fila.classList.remove("en-curso");
+      fila.classList.add("lista");
+      fila.querySelector(".estado").textContent = "✅ lista";
+      fila.querySelector(".hilo").textContent = `hilo: ${datos.hilo}`;
+      fila.querySelector(".tiempos").textContent =
+        `servidor: ${datos.servidor_ms} ms · desde el disparo: ${Math.round(msDesdeDisparo)} ms`;
+    }
+
+    function pintarError(fila, error) {
+      fila.classList.remove("en-curso");
+      fila.classList.add("fallida");
+      fila.querySelector(".estado").textContent = "❌ error";
+      fila.querySelector(".tiempos").textContent =
+        error && error.message ? error.message : String(error);
+    }
+
+    function pintarResumen(n, sumaRetardos, totalMs) {
+      const secuencial = sumaRetardos * 1000;
+      const ahorro = Math.max(0, Math.round(secuencial - totalMs));
+      contResumen.hidden = false;
+      contResumen.innerHTML =
+        `✅ ${n} peticiones completadas en <strong>${Math.round(totalMs)} ms</strong> ` +
+        `(trabajo simulado total: ${sumaRetardos} s). Si se hubieran atendido ` +
+        `una por una habrían tardado ≈ ${secuencial} ms; en paralelo ahorraste ` +
+        `≈ ${ahorro} ms.`;
+    }
+  </script>
+</body>
+</html>

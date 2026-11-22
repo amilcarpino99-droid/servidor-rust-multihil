@@ -1,0 +1,7 @@
+[package]
+name = "servidor-multihilo"
+version = "0.1.0"
+edition = "2021"
+
+# Sin dependencias externas: todo con la librería estándar.
+[dependencies]
